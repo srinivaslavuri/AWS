@@ -1,0 +1,269 @@
+# AWS CloudWatch – EC2 Level Monitoring
+
+## 1. What is CloudWatch?
+
+CloudWatch is a monitoring service provided by Amazon Web Services.
+
+It helps us:
+
+* Monitor EC2 performance
+* Create alarms
+* Send notifications
+* Trigger automated actions
+
+In real production environments, CloudWatch continuously monitors infrastructure and reacts when thresholds are crossed.
+
+---
+
+## 2. Default Metrics Available for EC2
+
+When we launch an EC2 instance, CloudWatch automatically collects the following metrics:
+
+* CPU Utilization
+* Network In
+* Network Out
+* Disk Read Operations
+* Disk Write Operations
+* Status Checks
+
+Important:
+
+By default, CloudWatch does NOT collect:
+
+* Memory usage
+* Disk space usage inside the operating system
+
+---
+
+## 3. Types of Monitoring in EC2
+
+### Basic Monitoring
+
+* Metrics updated every 5 minutes
+* Enabled by default
+* No additional cost
+
+### Detailed Monitoring
+
+* Metrics updated every 1 minute
+* Additional cost
+* Recommended for production environments
+
+In production systems, detailed monitoring provides faster alert detection.
+
+---
+
+## 4. CloudWatch Alarm Concept
+
+A CloudWatch alarm consists of three components:
+
+Metric
+Example: CPUUtilization
+
+Threshold
+Example: CPU greater than or equal to 80 percent
+
+Action
+Example: Send email, trigger Auto Scaling, invoke Lambda
+
+Example scenario:
+
+If CPU usage becomes 80 percent or more for 5 minutes, send email notification.
+
+---
+
+## 5. Step-by-Step: Create SNS Topic and Email Subscription
+
+Before creating an alarm, we must configure SNS.
+
+### Step 1: Create SNS Topic
+
+1. Go to AWS Console
+2. Search for SNS
+3. Click Topics
+4. Click Create topic
+5. Select Standard
+6. Name: ec2-alert-topic
+7. Click Create
+
+### Step 2: Create Subscription
+
+1. Open the topic
+2. Click Create subscription
+3. Protocol: Email
+4. Endpoint: Your email address
+5. Click Create
+6. Confirm the subscription from your email inbox
+
+Now SNS is ready to send alerts.
+
+---
+
+## 6. Create High CPU Alarm (CPU >= 80%)
+
+Scenario:
+
+If CPU usage becomes 80 percent or more for 5 minutes, send email alert.
+
+### Steps:
+
+1. Go to CloudWatch
+2. Click Alarms
+3. Click Create alarm
+4. Select Metric
+5. Choose EC2
+6. Select Per-Instance Metrics
+7. Select CPUUtilization
+
+Configure conditions:
+
+* Threshold type: Static
+* Whenever CPUUtilization is Greater than or equal to 80
+* For 5 consecutive minutes
+
+Attach SNS topic:
+
+* Select ec2-alert-topic
+
+Name the alarm:
+
+High-CPU-80
+
+Click Create alarm.
+
+---
+
+## 7. Practical Demo: Generate CPU Load
+
+Login to EC2 instance.
+
+Install stress tool:
+
+```
+sudo dnf install stress -y
+```
+
+Check number of CPUs:
+
+```
+nproc
+```
+
+Generate CPU load:
+
+```
+stress --cpu 2 --timeout 600
+```
+
+This will create CPU load for 10 minutes.
+
+After 5 minutes, CloudWatch alarm state will change to ALARM and email notification will be triggered.
+
+This is a good live demo scenario for training.
+
+---
+
+## 8. Create Low CPU Alarm (CPU <= 10%)
+
+Scenario:
+
+If CPU usage is less than or equal to 10 percent for 10 minutes, send alert.
+
+Use cases:
+
+* Detect idle servers
+* Cost optimization
+* Auto scale-in decision
+
+### Steps:
+
+1. Go to CloudWatch
+2. Click Create alarm
+3. Select CPUUtilization
+
+Configure condition:
+
+* Less than or equal to 10
+* For 10 minutes
+
+Attach SNS topic
+
+Name:
+
+Low-CPU-10
+
+Click Create alarm.
+
+---
+
+## 9. EC2 Protection Settings (Important for Interviews)
+
+### Stop Protection
+
+Prevents stopping the instance from AWS Console.
+
+If shutdown command is run from inside the operating system, instance will still stop.
+
+---
+
+### Termination Protection
+
+Prevents terminating the instance from AWS Console.
+
+Recommended to enable in production environments.
+
+---
+
+### Shutdown Behavior
+
+When shutdown is initiated from OS level, what should happen?
+
+Options:
+
+* Stop (Default)
+* Terminate
+
+If set to Terminate, shutdown command will permanently delete the instance.
+
+Be careful in production.
+
+---
+
+## 10. Real-Time Production Scenario
+
+Example:
+
+You are running:
+
+* Java application
+* Nginx
+* Backend service
+
+Suddenly CPU reaches 95 percent.
+
+CloudWatch alarm triggers
+SNS sends email
+Auto Scaling launches new instance
+Load Balancer distributes traffic
+
+This is a real DevOps implementation scenario.
+
+---
+
+## 11. Interview Questions
+
+Does CloudWatch monitor memory by default?
+No
+
+How to monitor disk usage?
+Install CloudWatch Agent
+
+Difference between Basic and Detailed monitoring?
+5 minutes vs 1 minute
+
+Can CloudWatch trigger Auto Scaling?
+Yes
+
+What happens if shutdown behavior is set to terminate?
+Instance will be permanently deleted.
+
